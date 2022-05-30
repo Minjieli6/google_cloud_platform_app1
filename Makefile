@@ -4,12 +4,12 @@ install:
 
 test:
 	#python -m pytest -vv test_app.py
-	python test_app.py
+	python test_main.py
 
 format:
 	black *.py
 
 lint:
-	pylint --disable=R,C app.py
+	pylint --disable=R,C main.py
 
 all: install lint test
