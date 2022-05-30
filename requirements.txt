@@ -1,0 +1,8 @@
+pytest
+pylint
+jinja2
+dash
+plotly
+plotly_express
+pandas
+dash_table
