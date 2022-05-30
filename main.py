@@ -1,6 +1,5 @@
 
 from dash import Dash, Input, Output,dcc, html
-#import plotly.express as px
 import time
 from datetime import datetime
 import pandas as pd
@@ -19,6 +18,7 @@ period1 = int(time.mktime(datetime(2010,1,1,23,59).timetuple()))
 period2 = int(time.mktime(datetime.now().timetuple()))
 
 app = Dash(__name__)
+server = app.server
 
 app.layout = html.Div([
     dcc.Input(id="input-1", type="text", value="^GSPC"),
@@ -90,4 +90,4 @@ def update_figure(selected_year, n_ma, ticker):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, host='0.0.0.0', port=8080)
