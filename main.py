@@ -23,16 +23,16 @@ server = app.server
 
 app.layout = html.Div([
     dcc.Input(id="input-1", type="text", value="^GSPC"),
-    dcc.Input(id='num-multi',type='number',value=15),
-    #dcc.Input(id="input-2", type="number", value=2021),
+    dcc.Input(id='num-multi',type='number',value=60),
+    dcc.Input(id="input-2", type="text", value="visualization"),
     #html.Button(id='submit-button-state', n_clicks=0, children='Submit'),
     dcc.Graph(id='graph-with-slider'),
             dcc.Slider(
             2010, #df['year'].min()
-            2023, #df['year'].max()
+            2024, #df['year'].max()
             step=None,
             value=2010, #df['year'].min()
-            marks={str(year): str(year) for year in range(2010,2022+2)}, #df['year'].unique()
+            marks={str(year): str(year) for year in range(2010,2022+3)}, #df['year'].unique()
             id='year-slider'
         )  
     
@@ -42,58 +42,58 @@ app.layout = html.Div([
 @app.callback(
     Output('graph-with-slider', 'figure'),
     Input('year-slider', 'value'),
-    #Input("input-2", 'value'),
-    Input('num-multi', 'value'),
     Input("input-1", 'value'),
+    Input('num-multi', 'value'),
+    Input("input-2", 'value')
 
     )
-def update_figure(selected_year, n_ma, ticker):
+def update_figure(selected_year, ticker, n_ma,fcas):
     #query_string = f'https://query1.finance.yahoo.com/v7/finance/download/{ticker}?period1={period1}&period2={period2}&interval={interval}&events=history&includeAdjustedClose=true'
     x = "https://query1.finance.yahoo.com/v7/finance/download/"+str(ticker)+"?period1="+str(period1)+"&period2="+str(period2)+"&interval="+str(interval)+"&events=history"
     #print(x)
     df = pd.read_csv(x)
 
-    df['ds'] = df['Date']
-    df['y'] = df['Adj Close']
+    if fcas == 'forecast':
+        df['ds'] = df['Date']
+        df['y'] = df['Adj Close']
 
-    model = NeuralProphet(
-        n_forecasts=60,
-        n_lags=60,
-        n_changepoints=50,
-        yearly_seasonality=True,
-        weekly_seasonality=False,
-        daily_seasonality=False,
-        batch_size=64,
-        epochs=100,
-        learning_rate=1.0,
-    )
-    # fit your model
-    fitted = model.fit(df[['ds','y']], freq='D')
-    future = model.make_future_dataframe(df[['ds','y']], periods=60,n_historic_predictions=len(df))
-    forecast = model.predict(future)
+        model = NeuralProphet(n_forecasts=360,n_lags=360,epochs=10)
+        # fit your model
+        if len(df)>=720:
+            #fitted = model.fit(df[['ds','y']], freq='D')
+            future = model.make_future_dataframe(df[['ds','y']][-720:], periods=360,n_historic_predictions=720)
+        else: 
+            future = model.make_future_dataframe(df[['ds','y']], periods=360,n_historic_predictions=len(df))
+        
+        forecast = model.predict(future)
 
-    chart = forecast[['ds','y','yhat60']]
-    chart['ds'] = chart['ds'].astype("datetime64")
-    
-    f = chart.iloc[np.isnan(chart['y'].values)]
-    combo = pd.concat([df,f])
-    combo['Date'] = combo['ds'].astype("datetime64")
-    combo['Prediction'] = combo['yhat60']
-    combo = combo.set_index("Date")
-    combo["date"] = combo["ds"].astype("datetime64")
-    combo["year"] = combo["ds"].astype("datetime64").dt.year
+        chart = forecast[['ds','y','yhat360']]
+        chart['ds'] = chart['ds'].astype("datetime64")
+        
+        f = chart.iloc[np.isnan(chart['y'].values)]
+        combo = pd.concat([df,f])
+        combo['Date'] = combo['ds'].astype("datetime64")
+        combo['Prediction'] = combo['yhat360']
+        combo = combo.set_index("Date")
+        combo["date"] = combo["ds"].astype("datetime64")
+        combo["year"] = combo["ds"].astype("datetime64").dt.year
+    else:
+        combo = df.copy()
+        combo["date"] = combo["Date"].astype("datetime64")
+        combo["year"] = combo["Date"].astype("datetime64").dt.year
 
     filtered_df = combo[combo.year >= selected_year]
     filtered_df[str(n_ma) + 'day_rolling_avg'] = filtered_df[v].rolling(n_ma).mean()
 
     #fig = px.line(filtered_df, x="date", y=[v,str(n_ma) + 'day_rolling_avg'])
     #fig.update_layout() #transition_duration=500
-    fig = make_subplots(rows=3, cols=2,subplot_titles=['Adj Close +High +Low +Moving Average + Prediction', 'Volume', 'High', 'Low','Open', 'Close'])
+    fig = make_subplots(rows=3, cols=2,subplot_titles=['Adj Close +High +Low +Moving Average', 'Volume', 'High', 'Low','Open', 'Close'])
 
     fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['High'], mode="lines"),row=1, col=1) #, marker=dict(color='#17becf'))
     fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['Low'], mode="lines"),row=1, col=1) #,marker=dict(color='#1f77b4'))
     fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['Adj Close'], mode="lines"),row=1, col=1)  #, marker=dict(color='#bcbd22'))
-    fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['Prediction'], mode="lines"),row=1, col=1)  #, marker=dict(color='#bcbd22'))
+    if fcas == "forecast":
+        fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['Prediction'], mode="lines"),row=1, col=1)  #, marker=dict(color='#bcbd22'))
     fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df[str(n_ma) + 'day_rolling_avg'], mode="lines"),row=1, col=1)  #, marker=dict(color='#bcbd22'))
     
     fig.add_trace(go.Bar(x=filtered_df['date'], y=filtered_df['Volume'],marker=dict(color="blue")), row=1, col=2)
