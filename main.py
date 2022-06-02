@@ -5,7 +5,8 @@ from datetime import datetime
 import pandas as pd
 from plotly.subplots import make_subplots
 import plotly.graph_objs as go
-
+from neuralprophet import NeuralProphet
+import numpy as np
 
 interval = '1d' # 1d, 1wk, 1m
 #ticker = '^GSPC' # 'AAPL,TSLA, AMZN,GOOGL,FDN,FB,^GSPC
@@ -28,10 +29,10 @@ app.layout = html.Div([
     dcc.Graph(id='graph-with-slider'),
             dcc.Slider(
             2010, #df['year'].min()
-            2022, #df['year'].max()
+            2023, #df['year'].max()
             step=None,
             value=2010, #df['year'].min()
-            marks={str(year): str(year) for year in range(2010,2022+1)}, #df['year'].unique()
+            marks={str(year): str(year) for year in range(2010,2022+2)}, #df['year'].unique()
             id='year-slider'
         )  
     
@@ -51,19 +52,48 @@ def update_figure(selected_year, n_ma, ticker):
     x = "https://query1.finance.yahoo.com/v7/finance/download/"+str(ticker)+"?period1="+str(period1)+"&period2="+str(period2)+"&interval="+str(interval)+"&events=history"
     #print(x)
     df = pd.read_csv(x)
-    df["date"] = df["Date"].astype("datetime64")
-    df["year"] = df["Date"].astype("datetime64").dt.year
 
-    filtered_df = df[df.year >= selected_year]
-    filtered_df[str(n_ma) + 'day_rolling_avg'] = df[v].rolling(n_ma).mean()
+    df['ds'] = df['Date']
+    df['y'] = df['Adj Close']
+
+    model = NeuralProphet(
+        n_forecasts=60,
+        n_lags=60,
+        n_changepoints=50,
+        yearly_seasonality=True,
+        weekly_seasonality=False,
+        daily_seasonality=False,
+        batch_size=64,
+        epochs=100,
+        learning_rate=1.0,
+    )
+    # fit your model
+    fitted = model.fit(df[['ds','y']], freq='D')
+    future = model.make_future_dataframe(df[['ds','y']], periods=60,n_historic_predictions=len(df))
+    forecast = model.predict(future)
+
+    chart = forecast[['ds','y','yhat60']]
+    chart['ds'] = chart['ds'].astype("datetime64")
+    
+    f = chart.iloc[np.isnan(chart['y'].values)]
+    combo = pd.concat([df,f])
+    combo['Date'] = combo['ds'].astype("datetime64")
+    combo['Prediction'] = combo['yhat60']
+    combo = combo.set_index("Date")
+    combo["date"] = combo["ds"].astype("datetime64")
+    combo["year"] = combo["ds"].astype("datetime64").dt.year
+
+    filtered_df = combo[combo.year >= selected_year]
+    filtered_df[str(n_ma) + 'day_rolling_avg'] = filtered_df[v].rolling(n_ma).mean()
 
     #fig = px.line(filtered_df, x="date", y=[v,str(n_ma) + 'day_rolling_avg'])
     #fig.update_layout() #transition_duration=500
-    fig = make_subplots(rows=3, cols=2,subplot_titles=['Adj Close +High +Low +Moving Average', 'Volume', 'High', 'Low','Open', 'Close'])
+    fig = make_subplots(rows=3, cols=2,subplot_titles=['Adj Close +High +Low +Moving Average + Prediction', 'Volume', 'High', 'Low','Open', 'Close'])
 
     fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['High'], mode="lines"),row=1, col=1) #, marker=dict(color='#17becf'))
     fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['Low'], mode="lines"),row=1, col=1) #,marker=dict(color='#1f77b4'))
     fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['Adj Close'], mode="lines"),row=1, col=1)  #, marker=dict(color='#bcbd22'))
+    fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df['Prediction'], mode="lines"),row=1, col=1)  #, marker=dict(color='#bcbd22'))
     fig.add_trace(go.Scatter(x=filtered_df['date'], y=filtered_df[str(n_ma) + 'day_rolling_avg'], mode="lines"),row=1, col=1)  #, marker=dict(color='#bcbd22'))
     
     fig.add_trace(go.Bar(x=filtered_df['date'], y=filtered_df['Volume'],marker=dict(color="blue")), row=1, col=2)
