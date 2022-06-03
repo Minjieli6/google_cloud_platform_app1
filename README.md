@@ -8,14 +8,15 @@
     - [Real Time Extraction](#real-time-extraction)
     - [Google Cloud Storage](#google-cloud-storage)
 - [III. Continuous Deployment from CircleCI](#iii-continuous-deployment-from-circleci)
-- [IV. ML predictions created and served out (AutoML, BigQuery, etc.)](#iv-ml-predictions-created-and-served-out-automl-bigquery-etc)
+- [IV. Data](#iv-data)
+- [V. ML predictions created and served out (AutoML, BigQuery, etc.)](#v-ml-predictions-created-and-served-out-automl-bigquery-etc)
     - [NeuralProphet](#neuralprophet)
     - [GCP BigQuery ML](#gcp-bigquery-ml)
-- [V. Stackdriver installed for monitoring](#v-stackdriver-installed-for-monitoring)
-- [VI. Deployed into GCP environment with Cloud Run](#vi-deployed-into-gcp-environment-with-cloud-run)
+- [VI. Stackdriver installed for monitoring](#vi-stackdriver-installed-for-monitoring)
+- [VII. Deployed into GCP environment with Cloud Run](#vii-deployed-into-gcp-environment-with-cloud-run)
     - [Deploy to GCP Cloud Run](#deploy-to-gcp-cloud-run)
     - [Deploy locally](#deploy-locally)
-- [VII. Result and Demo](#vii-result-and-demo)
+- [VIII. Result and Demo](#viii-result-and-demo)
     - [Input Parameters](#input-parameters)
     - [App Link](#app-link)
     - [Demo Link](#demo-link)
@@ -72,7 +73,7 @@ git pull
 git push
 ```
 
-## **IV. Data stored in GCP (BigQuery, Google Cloud Storage, etc.)**
+## **IV. Data**
 ### **Real Time Extraction**
 
 We get the stock market data from [Yahoo Finance](https://finance.yahoo.com/quote/%5EGSPC?p=^GSPC&.tsrc=fin-srch) with several input parameters, such as stock symbol, starting time, ending time, and frequency through an URL as below. In this case, it’s unnecessary to store data into Google Cloud Storage since we’re able to leverage the real-time extraction.  
@@ -93,13 +94,13 @@ print(df.head(3))
 
 ### **Google Cloud Storage**
 
-Alternatively, we can upload data to Google Cloud Storage, and then use Google Cloud Function to schedule data updates through Google Cloud Scheduler in Figure 2. However, it would generate cost from the Cloud Storage.
+Alternatively, we can upload data to Google Cloud Storage, and then use Google Cloud Function to schedule data updates through Google Cloud Scheduler in Figure 4. However, it would generate cost from the Cloud Storage.
 
 ![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/6_GCP_Cloud_Storage.png)
 
-Figure 2: Cloud Storage for BigQuery ML
+Figure 4: Cloud Storage for BigQuery ML
 
-## **IV. ML predictions created and served out (AutoML, BigQuery, etc.)**
+## **V. ML predictions created and served out (AutoML, BigQuery, etc.)**
 
 ### **NeuralProphet**
 
@@ -120,20 +121,20 @@ model.plot_components(forecast)
 ```
 ![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/7_snp_decomposition.png)
 
-Figure 4.1: S&P time series decomposition 
+Figure 5.1: S&P time series decomposition 
 
 ### **GCP BigQuery ML**
 
-Alternatively, we can easily create an end-to-end AutoML model ARIMA for training and forecasting the stock with **BigQuery ML**. In Figure 4.2, we train and deploy ML models directly in SQL, then visualize the forecasted values with Data Studio in Figure 4.3. In BigQuery ML, data is auto preprocessed with missing value imputation, timestamp deduplication, anomalies identification, holiday effects, seasonal and trend decomposition. The best model is generated with the lowest AIC score. Time-series model Auto ARIMA can be scheduled to retrain automatically. The result can be loaded and displayed in Python using the code below. 
+Alternatively, we can easily create an end-to-end AutoML model ARIMA for training and forecasting the stock with **BigQuery ML**. In Figure 5.2, we train and deploy ML models directly in SQL, then visualize the forecasted values with Data Studio in Figure 5.3. In BigQuery ML, data is auto preprocessed with missing value imputation, timestamp deduplication, anomalies identification, holiday effects, seasonal and trend decomposition. The best model is generated with the lowest AIC score. Time-series model Auto ARIMA can be scheduled to retrain automatically. The result can be loaded and displayed in Python using the code below. 
 
 
 ![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/8_ARIMA_BigQueryML.png)
 
-Figure 4.2: Create an ARIMA model in SQL with BigQuery ML 
+Figure 5.2: Create an ARIMA model in SQL with BigQuery ML 
 
 ![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/9_forecast_BigQueryML.png)
 
-Figure 4.3: S&P time series decomposition 
+Figure 5.3: S&P time series decomposition 
 
 ```js
 from google.cloud import bigquery
@@ -157,50 +158,46 @@ fig = px.line(df, x="timestamp", y=df.columns, title='Amazon Stock Price')
 fig.show()
 ```
 
-## **V. Stackdriver installed for monitoring**
-Google Cloud’s operation suite, formerly called stackdriver, integrated monitoring, logging, and trace managed services for applications and systems running on Google Cloud. It not only provides visibility into the performance, uptime, and overall health of the app, but also enables users to set alerts and notify if metrics are in the expected ranges. Cloud logging in Figure 5.1 shows real-time logs and helps improve troubleshooting and debugging. Cloud monitoring in Figure 5.2 is a custom dashboard for us to track the usages of container’s memory and CPU, as well log entries etc. Cloud trace in Figure 5.3 collects latency data from the app and tracks how requests propagate through the app.  
+## **VI. Stackdriver installed for monitoring**
+Google Cloud’s operation suite, formerly called stackdriver, integrated monitoring, logging, and trace managed services for applications and systems running on Google Cloud. It not only provides visibility into the performance, uptime, and overall health of the app, but also enables users to set alerts and notify if metrics are in the expected ranges. Cloud logging in Figure 6.1 shows real-time logs and helps improve troubleshooting and debugging. Cloud monitoring in Figure 6.2 is a custom dashboard for us to track the usages of container’s memory and CPU, as well log entries etc. Cloud trace in Figure 6.3 collects latency data from the app and tracks how requests propagate through the app.  
 
 ![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/10_GCP_cloud_logging.png)
 
-Figure 5.1: GCP cloud logging
+Figure 6.1: GCP cloud logging
 
 ![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/11_GCP_cloud_monitoring.png)
 
-Figure 5.2: Cloud monitoring custom dashboard 
+Figure 6.2: Cloud monitoring custom dashboard 
 
 ![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/12_GCP_Cloud_trace.png)
 
-Figure 5.3: Cloud trace
+Figure 6.3: Cloud trace
 
-## **VI. Deployed into GCP environment with Cloud Run**
+## **VII. Deployed into GCP environment with Cloud Run**
 
 ### **Deploy to GCP Cloud Run**
 
-The app is built with Dockerfile and deployed as container to **Cloud Run** service [googlecloudplatformapp1] in project [second-strand-351703] region [us-east1] in Figure 6.1. 
+The app is built with Dockerfile and deployed as container to **Cloud Run** service [googlecloudplatformapp1] in project [second-strand-351703] region [us-east1] in Figure 7.1. 
 
 ![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/15_GCP_deployment.png)
 
-Figure 6.1: Deployed into GCP environment with Cloud Run
+Figure 7.1: Deployed into GCP environment with Cloud Run
 
 ```js
 make all
 gcloud run deploy
 ```
 
-This code is used to deploy the container to cloud run. We can see the API traffic, errors, and median latency in Figure 6.2. Once it's deployed, there are more comprehensive metrics including request and instant count in Cloud Run metrics as Figure 6.3. 
+This code is used to deploy the container to cloud run. We can see the API traffic, errors, and median latency in Figure 7.2. Once it's deployed, there are more comprehensive metrics including request and instant count in Cloud Run metrics as Figure 7.3. 
 
 
-![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/10_GCP_cloud_logging.png)
+![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/13_GCP_APIservices.png)
 
-Figure 6.2: GCP cloud logging
+Figure 7.2: API services
 
-![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/11_GCP_cloud_monitoring.png)
+![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/14_GCP_Cloud_run.png)
 
-Figure 6.3: Cloud monitoring custom dashboard 
-
-![](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/12_GCP_Cloud_trace.png)
-
-Figure 6.4: Cloud trace
+Figure 7.3: Cloud run metrics 
 
 ### **Deploy locally**
 Alternatively, the app can be easily deployed with a local host by using the code below. 
@@ -209,8 +206,8 @@ make install
 python main.py
 ```
 
-## **VII. Result and Demo**
-The **interactive** results with **plotly dash** display high, low, adjusted closed, moving average, and next 360 days forecasted values in Figure 16. Demo is also attached. 
+## **VIII. Result and Demo**
+The **interactive** results with **plotly dash** display high, low, adjusted closed, moving average, and next 360 days forecasted values in Figure 8. Demo is also attached. 
 
 ### **Input Parameters:**
 * 1st text input: stock symbol (such as ^GSPC, ^DJI, or FDN etc)
@@ -233,5 +230,5 @@ The **interactive** results with **plotly dash** display high, low, adjusted clo
 
 [![Watch the video](https://github.com/Minjieli6/google_cloud_platform_app1/blob/main/doc/16_app_result.png)](https://youtu.be/wIXzjELHWNQ)
 
-Figure 7: Historical and forecasted values on the deployed app
+Figure 8: Historical and forecasted values on the deployed app
 
