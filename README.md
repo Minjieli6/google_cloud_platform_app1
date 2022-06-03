@@ -23,6 +23,8 @@
 ## **I. Project Overview**
 In this project, we build an application to visualize stock market data from Yahoo Finance and its forecasting of market movement over time through the architecture pipeline shown in Figure 1. 
 
+### **App link:** https://googlecloudplatformapp1-hmlu6pvwmq-ue.a.run.app/
+### **Demo link:** https://youtu.be/wIXzjELHWNQ
 
 ### **Architecture Diagram**
 <br></br>
@@ -223,9 +225,10 @@ The **interactive** results with **plotly dash** display high, low, adjusted clo
     * **range slicer** for individual chart
 
 ### **App link:** https://googlecloudplatformapp1-hmlu6pvwmq-ue.a.run.app/
-### **Demo link:** 
+### **Demo link:** https://youtu.be/wIXzjELHWNQ
 
 **Click the chart below for Demo video**
-[![Watch the video](16_app_result.png)](stock_visualizer_app.mp4)
+[![Watch the video](16_app_result.png)](https://youtu.be/wIXzjELHWNQ)
 
 Figure 7: Historical and forecasted values on the deployed app
+
