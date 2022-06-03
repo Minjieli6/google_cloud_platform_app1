@@ -57,14 +57,11 @@ def update_figure(selected_year, ticker, n_ma,fcas):
         df['ds'] = df['Date']
         df['y'] = df['Adj Close']
 
-        model = NeuralProphet(n_forecasts=360,n_lags=360,epochs=10)
+        model = NeuralProphet(n_forecasts=360,n_lags=360,epochs=3)
         # fit your model
-        if len(df)>=720:
-            #fitted = model.fit(df[['ds','y']], freq='D')
-            future = model.make_future_dataframe(df[['ds','y']][-720:], periods=360,n_historic_predictions=720)
-        else: 
-            future = model.make_future_dataframe(df[['ds','y']], periods=360,n_historic_predictions=len(df))
-        
+        model.fit(df[['ds','y']], freq='D')
+        time.sleep(15)
+        future = model.make_future_dataframe(df[['ds','y']], periods=360,n_historic_predictions=len(df))
         forecast = model.predict(future)
 
         chart = forecast[['ds','y','yhat360']]
